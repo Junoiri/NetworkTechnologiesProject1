@@ -1,4 +1,4 @@
-package com.example.networktechnologiesproject1;
+package com.example.networktechnologiesproject1.entities;
 
 
 import jakarta.persistence.Entity;
