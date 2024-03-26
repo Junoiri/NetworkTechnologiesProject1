@@ -36,6 +36,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authz -> authz
+                        .requestMatchers("/register").permitAll()  // Permit all access to the register and login endpoint
                         .requestMatchers("/login").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
@@ -44,4 +45,5 @@ public class SecurityConfig {
 
         return http.build();
     }
+
 }
