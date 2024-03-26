@@ -1,1 +1,3 @@
 rootProject.name = 'NetworkTechnologiesProject1'
+include 'NT_techer_example'
+
