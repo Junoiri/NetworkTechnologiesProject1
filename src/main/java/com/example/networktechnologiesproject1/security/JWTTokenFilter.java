@@ -12,18 +12,21 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 public class JWTTokenFilter extends OncePerRequestFilter {
 
+    private static final Logger logger = LoggerFactory.getLogger(JWTTokenFilter.class);
+
     private final String key;
 
-    public JWTTokenFilter(String key){
+    public JWTTokenFilter(String key) {
         this.key = key;
     }
 
@@ -31,8 +34,9 @@ public class JWTTokenFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
+            String token = authHeader.split(" ")[1];
 
             try {
                 Claims claims = Jwts.parserBuilder()
@@ -41,20 +45,21 @@ public class JWTTokenFilter extends OncePerRequestFilter {
                         .parseClaimsJws(token)
                         .getBody();
 
-                String username = claims.getSubject();
-                List<SimpleGrantedAuthority> authorities = Arrays.stream(claims.get("roles").toString().split(","))
-                        .map(String::trim)
-                        .map(SimpleGrantedAuthority::new)
-                        .collect(Collectors.toList());
+                String id = claims.getSubject();
+                String role = (String) claims.get("role");
 
-                Authentication authentication = new UsernamePasswordAuthenticationToken(username, null, authorities);
+                Authentication authentication = new UsernamePasswordAuthenticationToken(
+                        id, null, Collections.singletonList(new SimpleGrantedAuthority(role))
+                );
+
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                logger.debug("Authentication successful for id: {}", id);
             } catch (Exception e) {
-                // In case of failure, clear the security context
+                logger.error("Authentication error: {} - {}", e.getClass().getSimpleName(), e.getMessage());
                 SecurityContextHolder.clearContext();
             }
         } else {
-            // Clear context if no token found
+            logger.debug("No Authorization header found or Bearer token missing");
             SecurityContextHolder.clearContext();
         }
 

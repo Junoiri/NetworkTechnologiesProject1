@@ -18,7 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Value("${jwt.token}")
+    @Value("${jwt.secret}")
     private String key;
 
     @Bean
@@ -38,6 +38,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/register").permitAll()  // Permit all access to the register and login endpoint
                         .requestMatchers("/login").permitAll()
+                       // .requestMatchers("/book/**").permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
