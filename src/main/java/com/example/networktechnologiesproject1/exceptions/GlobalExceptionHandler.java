@@ -5,6 +5,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+/**
+ * Global exception handler for the application.
+ * Handles various exceptions and returns appropriate HTTP responses.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 

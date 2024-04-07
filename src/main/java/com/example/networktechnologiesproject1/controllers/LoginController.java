@@ -1,3 +1,6 @@
+/**
+ * Controller class for handling user authentication and registration.
+ */
 package com.example.networktechnologiesproject1.controllers;
 
 import com.example.networktechnologiesproject1.entities.User;
@@ -15,7 +18,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -42,6 +44,13 @@ public class LoginController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    /**
+     * Handles user login and generates JWT token upon successful authentication.
+     * @param loginForm The login form containing username and password.
+     * @return ResponseEntity containing JWT token upon successful login.
+     * @throws UserNotFoundException If the user is not found.
+     * @throws IncorrectPasswordException If the password is incorrect.
+     */
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginForm loginForm) {
         userService.findByUsername(loginForm.getUsername())
@@ -77,7 +86,12 @@ public class LoginController {
         }
     }
 
-
+    /**
+     * Registers a new user.
+     * @param newUser The user object containing registration details.
+     * @return ResponseEntity containing the registered user object.
+     * @throws UserAlreadyExistsException If the user already exists.
+     */
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody User newUser) {
         userService.findByUsername(newUser.getUsername())

@@ -1,5 +1,8 @@
 package com.example.networktechnologiesproject1.dataTransferObjects;
 
+/**
+ * Data Transfer Object (DTO) for representing book entity details.
+ */
 public class BookDTO {
     private String isbn;
     private String title;

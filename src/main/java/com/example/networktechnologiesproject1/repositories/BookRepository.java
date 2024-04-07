@@ -6,6 +6,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+/**
+ * Repository interface for performing CRUD operations on Book entities.
+ */
 @Repository
 public interface BookRepository extends CrudRepository<Book, Integer> {
     Optional<Book> findByIsbn(String isbn);

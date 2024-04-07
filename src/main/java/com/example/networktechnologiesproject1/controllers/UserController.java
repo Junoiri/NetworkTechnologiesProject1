@@ -88,22 +88,4 @@ public class UserController {
         userRepository.delete(user);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
-    // Example for authentication exception
-    /*
-    @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@RequestBody Map<String, String> loginDetails) {
-        try {
-            Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                    loginDetails.get("username"),
-                    loginDetails.get("password")
-                )
-            );
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            // Return a token or authentication success response
-        } catch (BadCredentialsException e) {
-            throw new UserAuthenticationException("Incorrect username or password.");
-        }
-    }
-    */
 }

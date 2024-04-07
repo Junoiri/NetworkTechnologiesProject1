@@ -20,12 +20,18 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.stream.Collectors;
 
+/**
+ * Filter class for processing JWT token authentication.
+ */
 public class JWTTokenFilter extends OncePerRequestFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(JWTTokenFilter.class);
 
     private final String key;
 
+    /**
+     * Constructor for JWTTokenFilter.
+     */
     public JWTTokenFilter(String key) {
         this.key = key;
     }
@@ -33,6 +39,14 @@ public class JWTTokenFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        String requestURI = request.getRequestURI();
+
+        // Bypass security filter chain for Swagger endpoints
+        if (requestURI.startsWith("/swagger-ui") || requestURI.startsWith("/v3/api-docs") || requestURI.startsWith("/swagger-resources") || requestURI.startsWith("/webjars")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {

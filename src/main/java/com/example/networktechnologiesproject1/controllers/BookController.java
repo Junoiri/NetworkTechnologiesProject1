@@ -10,17 +10,29 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * Controller class for handling book-related operations.
+ */
 @RestController
 @RequestMapping("/book")
 public class BookController {
 
     private final BookRepository bookRepository;
 
+    /**
+     * Constructor injecting BookRepository dependency.
+     * @param bookRepository The BookRepository instance.
+     */
     @Autowired
     public BookController(BookRepository bookRepository) {
         this.bookRepository = bookRepository;
     }
 
+    /**
+     * Adds a new book to the repository.
+     * @param book The book object to be added.
+     * @return The added book object.
+     */
     @PostMapping("/add")
     @ResponseStatus(HttpStatus.CREATED)
     public Book addBook(@RequestBody Book book) {
@@ -33,17 +45,32 @@ public class BookController {
         return bookRepository.save(book);
     }
 
+    /**
+     * Retrieves all books from the repository.
+     * @return Iterable containing all books.
+     */
     @GetMapping("/getAll")
     public Iterable<Book> getAll() {
         return bookRepository.findAll();
     }
 
+    /**
+     * Retrieves a book by its ID.
+     * @param id The ID of the book to retrieve.
+     * @return ResponseEntity containing the book object if found, or 404 if not found.
+     */
     @GetMapping("/{id}")
     public ResponseEntity<Book> getBookById(@PathVariable Integer id) {
         Book book = bookRepository.findById(id).orElseThrow(() -> new BookNotFoundException(id));
         return ResponseEntity.ok(book);
     }
 
+    /**
+     * Updates details of a book.
+     * @param id The ID of the book to update.
+     * @param bookDetails The updated details of the book.
+     * @return ResponseEntity containing the updated book object.
+     */
     @PutMapping("/update/{id}")
     public ResponseEntity<Book> updateBook(@PathVariable Integer id, @RequestBody Book bookDetails) {
         return bookRepository.findById(id).map(existingBook -> {
@@ -62,6 +89,11 @@ public class BookController {
     }
 
 
+    /**
+     * Deletes a book by its ID.
+     * @param id The ID of the book to delete.
+     * @return ResponseEntity indicating success or failure of deletion.
+     */
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteBook(@PathVariable Integer id) {
         Book book = bookRepository.findById(id).orElseThrow(() -> new BookNotFoundException(id));
@@ -69,6 +101,11 @@ public class BookController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Validates a book object for mandatory fields and format.
+     * @param book The book object to validate.
+     * @throws BookValidationException If validation fails.
+     */
     private void validateBook(Book book) {
         // Check if the title is null or empty
         if (book.getTitle() == null || book.getTitle().trim().isEmpty()) {
@@ -101,6 +138,11 @@ public class BookController {
         }
     }
 
+    /**
+     * Updates details of an existing book with new details.
+     * @param existingBook The existing book object.
+     * @param bookDetails The updated details of the book.
+     */
     private void updateBookDetails(Book existingBook, Book bookDetails) {
         existingBook.setIsbn(bookDetails.getIsbn());
         existingBook.setTitle(bookDetails.getTitle());
