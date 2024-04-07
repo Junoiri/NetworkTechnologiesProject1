@@ -5,16 +5,26 @@ import com.example.networktechnologiesproject1.exceptions.BookNotFoundException;
 import com.example.networktechnologiesproject1.exceptions.BookValidationException;
 import com.example.networktechnologiesproject1.exceptions.DuplicateBookException;
 import com.example.networktechnologiesproject1.repositories.BookRepository;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+
 
 /**
  * Controller class for handling book-related operations.
  */
+
 @RestController
 @RequestMapping("/book")
+@Tag(name = "Book Management", description = "APIs for managing books in the library. Includes functionalities for adding, retrieving, updating, and deleting book records, ensuring data integrity and compliance with library policies.")
 public class BookController {
 
     private final BookRepository bookRepository;
@@ -35,7 +45,14 @@ public class BookController {
      */
     @PostMapping("/add")
     @ResponseStatus(HttpStatus.CREATED)
-    public Book addBook(@RequestBody Book book) {
+    @Operation(summary = "Add a new book", description = "Adds a new book to the library's collection. Validates the book's data against predefined criteria to ensure it meets library standards before adding it to the database.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Book created",
+                    content = @Content(schema = @Schema(implementation = Book.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid book details supplied"),
+            @ApiResponse(responseCode = "409", description = "Duplicate book ISBN provided")
+    })
+    public Book addBook(@RequestBody @Parameter(description = "The book object containing detailed information about the book to be added. This includes the ISBN, title, author, publisher, year of publication, and the number of available copies.") Book book) {
         bookRepository.findByIsbn(book.getIsbn()).ifPresent(b -> {
             throw new DuplicateBookException(book.getIsbn());
         });
@@ -50,6 +67,8 @@ public class BookController {
      * @return Iterable containing all books.
      */
     @GetMapping("/getAll")
+    @Operation(summary = "Retrieve all books", description = "Fetches a comprehensive list of all books currently available in the library's collection. This includes detailed information about each book.")
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved the list of books", content = @Content(schema = @Schema(implementation = Book.class)))
     public Iterable<Book> getAll() {
         return bookRepository.findAll();
     }
@@ -60,7 +79,12 @@ public class BookController {
      * @return ResponseEntity containing the book object if found, or 404 if not found.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<Book> getBookById(@PathVariable Integer id) {
+    @Operation(summary = "Retrieve a book by ID", description = "Fetches detailed information about a specific book identified by its unique ID in the library's database.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully found and retrieved the book information", content = @Content(schema = @Schema(implementation = Book.class))),
+            @ApiResponse(responseCode = "404", description = "The book with the specified ID was not found in the database.")
+    })
+    public ResponseEntity<Book> getBookById(@PathVariable @Parameter(description = "The unique identifier of the book to retrieve. This corresponds to the book's ID in the database.") Integer id) {
         Book book = bookRepository.findById(id).orElseThrow(() -> new BookNotFoundException(id));
         return ResponseEntity.ok(book);
     }
@@ -72,7 +96,14 @@ public class BookController {
      * @return ResponseEntity containing the updated book object.
      */
     @PutMapping("/update/{id}")
-    public ResponseEntity<Book> updateBook(@PathVariable Integer id, @RequestBody Book bookDetails) {
+    @Operation(summary = "Update a book's details", description = "Updates the details of an existing book in the library's collection. This can include changes to the title, author, publisher, year of publication, and the number of available copies.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Book details successfully updated.", content = @Content(schema = @Schema(implementation = Book.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid update details supplied. This can occur if the provided information does not meet the validation criteria."),
+            @ApiResponse(responseCode = "404", description = "The book to update was not found in the database."),
+            @ApiResponse(responseCode = "409", description = "Conflict occurred due to duplicate ISBN with another book.")
+    })
+    public ResponseEntity<Book> updateBook(@PathVariable @Parameter(description = "The unique identifier of the book to update.") Integer id, @RequestBody @Parameter(description = "An object containing the updated book details.") Book bookDetails) {
         return bookRepository.findById(id).map(existingBook -> {
             bookRepository.findByIsbn(bookDetails.getIsbn()).ifPresent(b -> {
                 if (!b.getBookId().equals(existingBook.getBookId())) {
@@ -88,14 +119,18 @@ public class BookController {
         }).orElseThrow(() -> new BookNotFoundException(id));
     }
 
-
     /**
      * Deletes a book by its ID.
      * @param id The ID of the book to delete.
      * @return ResponseEntity indicating success or failure of deletion.
      */
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Void> deleteBook(@PathVariable Integer id) {
+    @Operation(summary = "Delete a book from the library", description = "Removes a book from the library's collection based on its unique ID. This action is irreversible.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Book successfully deleted from the library's collection."),
+            @ApiResponse(responseCode = "404", description = "The book to delete was not found in the database.")
+    })
+    public ResponseEntity<Void> deleteBook(@PathVariable @Parameter(description = "The unique identifier of the book to delete.") Integer id) {
         Book book = bookRepository.findById(id).orElseThrow(() -> new BookNotFoundException(id));
         bookRepository.delete(book);
         return ResponseEntity.noContent().build();

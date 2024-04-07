@@ -17,10 +17,23 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Parameter;
 
 
+
+/**
+ * Controller for managing book details, which include genre, summary, and cover image URL.
+ */
 @RestController
 @RequestMapping("/bookDetail")
+@Tag(name = "Book Details", description = "Endpoints for managing detailed information about books such as genre, summary, and cover image, which are additional to the basic book information.")
 public class BookDetailsController {
 
     private final BookDetailRepository bookDetailRepository;
@@ -34,7 +47,13 @@ public class BookDetailsController {
 
     @PostMapping("/add")
     @ResponseStatus(HttpStatus.CREATED)
-    public BookDetail addBookDetail(@RequestBody BookDetail bookDetail) {
+    @Operation(summary = "Add book detail", description = "Creates a new book detail record with genre, summary, and cover image URL. Validates the detail's data and checks the associated book exists.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Book detail successfully created", content = @Content(schema = @Schema(implementation = BookDetail.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid book detail supplied or associated book does not exist"),
+            @ApiResponse(responseCode = "409", description = "Duplicate book detail for the same book and genre")
+    })
+    public BookDetail addBookDetail(@RequestBody(description = "BookDetail object to be added, containing genre, summary, and cover image URL") BookDetail bookDetail) {
         validateBookDetail(bookDetail);
         if (!checkAssociatedBookExists(bookDetail.getBookId())) {
             throw new AssociatedBookNotFoundException(bookDetail.getBookId());
@@ -47,19 +66,34 @@ public class BookDetailsController {
 
 
     @GetMapping("/getAll")
+    @Operation(summary = "Get all book details", description = "Retrieves all book detail records from the database, including genres, summaries, and cover image URLs.")
+    @ApiResponse(responseCode = "200", description = "Successfully retrieved all book details", content = @Content(schema = @Schema(implementation = BookDetail.class)))
     public Iterable<BookDetail> getAllBookDetails() {
         return bookDetailRepository.findAll();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BookDetail> getBookDetailById(@PathVariable Integer id) {
+    @Operation(summary = "Get book detail by ID", description = "Retrieves a specific book detail record using its ID. The details include genre, summary, and cover image URL.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully retrieved book detail", content = @Content(schema = @Schema(implementation = BookDetail.class))),
+            @ApiResponse(responseCode = "404", description = "Book detail not found with the provided ID")
+    })
+    public ResponseEntity<BookDetail> getBookDetailById(@PathVariable @Parameter(description = "Unique identifier of the book detail to retrieve") Integer id) {
         BookDetail bookDetail = bookDetailRepository.findById(id)
                 .orElseThrow(() -> new BookDetailNotFoundException(id));
         return ResponseEntity.ok(bookDetail);
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<BookDetail> updateBookDetail(@PathVariable Integer id, @RequestBody BookDetail bookDetail) {
+    @Operation(summary = "Update book detail", description = "Updates an existing book detail record. Validates the new detail data and checks for duplicates before updating.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully updated book detail", content = @Content(schema = @Schema(implementation = BookDetail.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid book detail supplied for update"),
+            @ApiResponse(responseCode = "404", description = "Book detail not found with the provided ID"),
+            @ApiResponse(responseCode = "409", description = "Duplicate book detail for the same book and genre")
+    })
+    public ResponseEntity<BookDetail> updateBookDetail(@PathVariable @Parameter(description = "Unique identifier of the book detail to update") Integer id,
+                                                       @RequestBody(description = "Updated BookDetail object") BookDetail bookDetail) {
         return bookDetailRepository.findById(id).map(existingDetail -> {
             validateBookDetail(bookDetail);
             if (!existingDetail.getGenre().equals(bookDetail.getGenre()) &&
@@ -73,7 +107,13 @@ public class BookDetailsController {
 
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<Void> deleteBookDetail(@PathVariable Integer id) {
+    @Operation(summary = "Delete book detail", description = "Deletes a book detail record by ID. Checks for any dependencies that might prevent deletion.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Successfully deleted book detail"),
+            @ApiResponse(responseCode = "400", description = "Unauthorized attempt to delete a book detail or dependencies exist"),
+            @ApiResponse(responseCode = "404", description = "Book detail not found with the provided ID")
+    })
+    public ResponseEntity<Void> deleteBookDetail(@PathVariable @Parameter(description = "Unique identifier of the book detail to delete") Integer id) {
         BookDetail bookDetail = bookDetailRepository.findById(id)
                 .orElseThrow(() -> new BookDetailNotFoundException(id));
         if (!canDeleteBookDetail(bookDetail)) {

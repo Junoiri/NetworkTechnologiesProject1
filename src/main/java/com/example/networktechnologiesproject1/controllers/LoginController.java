@@ -25,12 +25,20 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Parameter;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.stream.Collectors;
 
 @RestController
+@Tag(name = "Authentication", description = "Endpoints for user authentication and registration in the library system.")
 public class LoginController {
 
     @Value("${jwt.secret}")
@@ -54,7 +62,12 @@ public class LoginController {
      */
     @SecurityRequirements
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginForm loginForm) {
+    @Operation(summary = "User login", description = "Authenticates a user and generates a JWT token for session management.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Login successful", content = @Content(schema = @Schema(implementation = String.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized, user not found or incorrect password"),
+    })
+    public ResponseEntity<String> login(@RequestBody @Parameter(description = "Login form with username and password") LoginForm loginForm) {
         userService.findByUsername(loginForm.getUsername())
                 .orElseThrow(() -> new UserNotFoundException(loginForm.getUsername()));
 
@@ -96,7 +109,12 @@ public class LoginController {
      */
     @SecurityRequirements
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody User newUser) {
+    @Operation(summary = "User registration", description = "Registers a new user to the library system and encrypts the password before saving.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "User registration successful", content = @Content(schema = @Schema(implementation = User.class))),
+            @ApiResponse(responseCode = "400", description = "Bad request, user details not valid or user already exists")
+    })
+    public ResponseEntity<?> register(@RequestBody @Parameter(description = "New user object with registration details") User newUser) {
         userService.findByUsername(newUser.getUsername())
                 .ifPresent(s -> {
                     throw new UserAlreadyExistsException(newUser.getUsername());
