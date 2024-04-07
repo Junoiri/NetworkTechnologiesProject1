@@ -11,6 +11,7 @@ import com.example.networktechnologiesproject1.services.UserService;
 import com.example.networktechnologiesproject1.services.LoginForm;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -51,6 +52,7 @@ public class LoginController {
      * @throws UserNotFoundException If the user is not found.
      * @throws IncorrectPasswordException If the password is incorrect.
      */
+    @SecurityRequirements
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginForm loginForm) {
         userService.findByUsername(loginForm.getUsername())
@@ -92,6 +94,7 @@ public class LoginController {
      * @return ResponseEntity containing the registered user object.
      * @throws UserAlreadyExistsException If the user already exists.
      */
+    @SecurityRequirements
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody User newUser) {
         userService.findByUsername(newUser.getUsername())

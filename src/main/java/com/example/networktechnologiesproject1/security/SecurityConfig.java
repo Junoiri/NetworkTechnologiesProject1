@@ -53,7 +53,7 @@ public class SecurityConfig {
 //                        .anyRequest().permitAll())
                         .requestMatchers("/register", "/login").permitAll() // Permit all for login and register
                         // Swagger permissions
-                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**", "/swagger-resources/**", "/webjars/**").permitAll()
+                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/swagger-resources/**", "/swagger-resources", "/v3/api-docs/**", "/proxy/**").permitAll()
                         // Reader permissions (ROLE_USER)
                         .requestMatchers(HttpMethod.POST, "/loan/add").hasRole("USER") // Borrow a book
                         .requestMatchers(HttpMethod.DELETE, "/loan/delete/*").hasRole("USER") // Return a book
