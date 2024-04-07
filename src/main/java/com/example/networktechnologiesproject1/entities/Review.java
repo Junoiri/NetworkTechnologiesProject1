@@ -28,7 +28,7 @@ public class Review {
     @Schema(description = "The textual review left by the user", example = "An enthralling journey from start to finish.")
     private String comment;
 
-    @Schema(description = "The date the review was posted", example = "2023-03-10T14:30:00Z")
+    @Schema(description = "The date the review was posted", example = "2024-04-07T00:00:00Z")
     private Date reviewDate;
     public Integer getReviewId() {
         return reviewId;

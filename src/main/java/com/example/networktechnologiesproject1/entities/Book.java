@@ -19,7 +19,7 @@ public class Book {
     @Schema(description = "Unique identifier of the book", example = "1", required = true)
     private Integer bookId;
 
-    @Schema(description = "International Standard Book Number", example = "978-3-16-148410-0")
+    @Schema(description = "International Standard Book Number", example = "1234567890123")
     private String isbn;
 
     @Schema(description = "Title of the book", example = "The Great Gatsby")
@@ -28,10 +28,10 @@ public class Book {
     @Schema(description = "Author(s) of the book", example = "F. Scott Fitzgerald")
     private String author;
 
-    @Schema(description = "Publisher of the book", example = "Charles Scribner's Sons")
+    @Schema(description = "Publisher of the book", example = "Some Publisher")
     private String publisher;
 
-    @Schema(description = "Year when the book was published", example = "1925")
+    @Schema(description = "Year when the book was published", example = "2000")
     private Long year;
 
     @Schema(description = "Number of available copies of the book", example = "3")

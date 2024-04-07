@@ -21,7 +21,7 @@ public class User {
     // Note: Passwords are generally not included in API documentation for security reasons
     private String password;
 
-    @Schema(description = "Specifies the user's role in the system", example = "READER")
+    @Schema(description = "Specifies the user's role in the system", example = "ROLE_STAFF")
     private String role;
 
     @Schema(description = "The user's email address", example = "john.doe@example.com")

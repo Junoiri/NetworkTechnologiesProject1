@@ -22,13 +22,13 @@ public class Loan {
     @Schema(description = "Identifier for the user who has borrowed the book", example = "42")
     private Integer userId;
 
-    @Schema(description = "The date when the book was borrowed", example = "2023-01-15T09:00:00Z")
+    @Schema(description = "The date when the book was borrowed", example = "2024-02-07T00:00:00Z")
     private Date loanDate;
 
-    @Schema(description = "The due date by which the book should be returned", example = "2023-02-15T09:00:00Z")
+    @Schema(description = "The due date by which the book should be returned", example = "2024-04-07T00:00:00Z")
     private Date dueDate;
 
-    @Schema(description = "The actual date the book was returned", example = "2023-02-10T09:00:00Z", nullable = true)
+    @Schema(description = "The actual date the book was returned", example = "2024-03-07T00:00:00Z", nullable = true)
     private Date returnDate;
 
 
