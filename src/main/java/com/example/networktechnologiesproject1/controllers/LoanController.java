@@ -1,6 +1,9 @@
 package com.example.networktechnologiesproject1.controllers;
 
 import com.example.networktechnologiesproject1.entities.Loan;
+import com.example.networktechnologiesproject1.exceptions.BookNotAvailableException;
+import com.example.networktechnologiesproject1.exceptions.LoanDateException;
+import com.example.networktechnologiesproject1.exceptions.LoanNotFoundException;
 import com.example.networktechnologiesproject1.repositories.LoanRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,11 +22,14 @@ public class LoanController {
     }
 
     @PostMapping("/add")
-    @ResponseStatus(HttpStatus.CREATED)
-    public Loan addLoan(@RequestBody Loan loan) {
-        return loanRepository.save(loan);
+    public ResponseEntity<Loan> addLoan(@RequestBody Loan loan) {
+        validateLoan(loan);
+        if (!isBookAvailableForLoan(loan.getBookId())) {
+            throw new BookNotAvailableException(loan.getBookId());
+        }
+        Loan savedLoan = loanRepository.save(loan);
+        return new ResponseEntity<>(savedLoan, HttpStatus.CREATED);
     }
-
     @GetMapping("/getAll")
     public Iterable<Loan> getAllLoans() {
         return loanRepository.findAll();
@@ -38,26 +44,39 @@ public class LoanController {
 
     @PutMapping("/update/{id}")
     public ResponseEntity<Loan> updateLoan(@PathVariable Integer id, @RequestBody Loan loanDetails) {
-        return loanRepository.findById(id)
-                .map(existingLoan -> {
-                    existingLoan.setBookId(loanDetails.getBookId());
-                    existingLoan.setUserId(loanDetails.getUserId());
-                    existingLoan.setLoanDate(loanDetails.getLoanDate());
-                    existingLoan.setDueDate(loanDetails.getDueDate());
-                    existingLoan.setReturnDate(loanDetails.getReturnDate());
-                    Loan updatedLoan = loanRepository.save(existingLoan);
-                    return new ResponseEntity<>(updatedLoan, HttpStatus.OK);
-                })
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        validateLoan(loanDetails);
+        return loanRepository.findById(id).map(existingLoan -> {
+            updateLoanDetails(existingLoan, loanDetails);
+            return new ResponseEntity<>(loanRepository.save(existingLoan), HttpStatus.OK);
+        }).orElseThrow(() -> new LoanNotFoundException(id));
     }
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteLoan(@PathVariable Integer id) {
-        return loanRepository.findById(id)
-                .map(loan -> {
-                    loanRepository.delete(loan);
-                    return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
-                })
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        Loan loan = loanRepository.findById(id)
+                .orElseThrow(() -> new LoanNotFoundException(id));
+        loanRepository.delete(loan);
+        return ResponseEntity.noContent().build();
+    }
+    private void validateLoan(Loan loan) {
+        if (loan.getDueDate() != null && loan.getLoanDate() != null && loan.getDueDate().before(loan.getLoanDate())) {
+            throw new LoanDateException("Due date cannot be before loan date.");
+        }
+    }
+
+    private boolean isBookAvailableForLoan(Integer bookId) {
+        return !loanRepository.existsByBookIdAndReturnDateIsNull(bookId);
+    }
+
+    private void updateLoanDetails(Loan existingLoan, Loan loanDetails) {
+        if (loanDetails.getReturnDate() != null && loanDetails.getLoanDate() != null
+                && loanDetails.getReturnDate().before(loanDetails.getLoanDate())) {
+            throw new LoanDateException("Return date must be after loan date.");
+        }
+        existingLoan.setBookId(loanDetails.getBookId());
+        existingLoan.setUserId(loanDetails.getUserId());
+        existingLoan.setLoanDate(loanDetails.getLoanDate());
+        existingLoan.setDueDate(loanDetails.getDueDate());
+        existingLoan.setReturnDate(loanDetails.getReturnDate());
     }
 }

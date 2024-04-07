@@ -1,4 +1,4 @@
-package com.example.networktechnologiesproject1.data.transfer.objects;
+package com.example.networktechnologiesproject1.dataTransferObjects;
 
 import java.util.Date;
 

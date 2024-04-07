@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface BookDetailRepository extends CrudRepository<BookDetail, Integer> {
+    boolean existsByBookIdAndGenre(Integer bookId, String genre);
 }

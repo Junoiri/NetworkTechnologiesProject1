@@ -1,6 +1,7 @@
 package com.example.networktechnologiesproject1.controllers;
 
 import com.example.networktechnologiesproject1.entities.User;
+import com.example.networktechnologiesproject1.exceptions.*;
 import com.example.networktechnologiesproject1.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,13 @@ public class UserController {
     @PreAuthorize("hasAuthority('ROLE_STAFF')")
     @ResponseStatus(HttpStatus.CREATED)
     public User addUser(@RequestBody User user) {
+        userRepository.findByUsername(user.getUsername())
+                .ifPresent(u -> {
+                    throw new DuplicateUserException(user.getUsername());
+                });
+        if (user.getPassword() == null || user.getUsername() == null || user.getEmail() == null) {
+            throw new InvalidUserDetailsException("User details are invalid.");
+        }
         user.setPassword(passwordEncoder.encode(user.getPassword())); // Encrypt password before saving
         return userRepository.save(user);
     }
@@ -39,35 +47,63 @@ public class UserController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('ROLE_STAFF')")
     public ResponseEntity<User> getUserById(@PathVariable Integer id) {
-        return userRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserIdNotFoundException(id));
+        return ResponseEntity.ok(user);
     }
 
     @PutMapping("/update/{id}")
     @PreAuthorize("hasAuthority('ROLE_STAFF')")
     public ResponseEntity<User> updateUser(@PathVariable Integer id, @RequestBody User userDetails) {
-        return userRepository.findById(id)
-                .map(existingUser -> {
-                    existingUser.setUsername(userDetails.getUsername());
-                    existingUser.setPassword(passwordEncoder.encode(userDetails.getPassword())); // Encrypt new password
-                    existingUser.setEmail(userDetails.getEmail());
-                    existingUser.setName(userDetails.getName());
-                    existingUser.setRole(userDetails.getRole());
-                    User updatedUser = userRepository.save(existingUser);
-                    return new ResponseEntity<>(updatedUser, HttpStatus.OK);
-                })
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new UserIdNotFoundException(id));
+
+        if (userDetails.getPassword() != null) {
+            existingUser.setPassword(passwordEncoder.encode(userDetails.getPassword())); // Encrypt new password
+        }
+        existingUser.setUsername(userDetails.getUsername());
+        existingUser.setEmail(userDetails.getEmail());
+        existingUser.setName(userDetails.getName());
+        existingUser.setRole(userDetails.getRole());
+
+        User updatedUser = userRepository.save(existingUser);
+
+        // Idea for manual authorization check
+        /*
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (!authentication.getName().equals(existingUser.getUsername())) {
+            throw new UserAuthorizationException("Not authorized to update this user.");
+        }
+        */
+
+        return ResponseEntity.ok(updatedUser);
     }
 
     @DeleteMapping("/delete/{id}")
     @PreAuthorize("hasAuthority('ROLE_STAFF')")
     public ResponseEntity<Void> deleteUser(@PathVariable Integer id) {
-        return userRepository.findById(id)
-                .map(user -> {
-                    userRepository.delete(user);
-                    return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
-                })
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserIdNotFoundException(id));
+
+        userRepository.delete(user);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
+    // Example for authentication exception
+    /*
+    @PostMapping("/login")
+    public ResponseEntity<?> authenticateUser(@RequestBody Map<String, String> loginDetails) {
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                    loginDetails.get("username"),
+                    loginDetails.get("password")
+                )
+            );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            // Return a token or authentication success response
+        } catch (BadCredentialsException e) {
+            throw new UserAuthenticationException("Incorrect username or password.");
+        }
+    }
+    */
 }
