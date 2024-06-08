@@ -54,11 +54,11 @@ public class SecurityConfig {
                         .requestMatchers("/register", "/login").permitAll() // Permit all for login and register
                         // Swagger permissions
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/swagger-resources/**", "/swagger-resources", "/v3/api-docs/**", "/proxy/**").permitAll()
-                        // Reader permissions (ROLE_USER)
-                        .requestMatchers(HttpMethod.POST, "/loan/add").hasRole("USER") // Borrow a book
-                        .requestMatchers(HttpMethod.DELETE, "/loan/delete/*").hasRole("USER") // Return a book
-                        .requestMatchers(HttpMethod.POST, "/review/add").hasRole("USER") // Add a review (BONUS)
-                        .requestMatchers(HttpMethod.GET, "/loan/getAll", "/loan/*").hasRole("USER") // View Loan History
+                        // Reader permissions (ROLE_USER and ROLE_STAFF)
+                        .requestMatchers(HttpMethod.POST, "/loan/add").hasAnyRole("USER", "STAFF") // Borrow a book
+                        .requestMatchers(HttpMethod.DELETE, "/loan/delete/*").hasAnyRole("USER", "STAFF") // Return a book
+                        .requestMatchers(HttpMethod.POST, "/review/add").hasAnyRole("USER", "STAFF") // Add a review (BONUS)
+                        .requestMatchers(HttpMethod.GET, "/loan/getAll", "/loan/*").hasAnyRole("USER", "STAFF") // View Loan History
                         // Librarian permissions (ROLE_STAFF)
                         .requestMatchers(HttpMethod.POST, "/bookDetail/add").hasRole("STAFF") // Add book details
                         .requestMatchers(HttpMethod.PUT, "/bookDetail/update/*").hasRole("STAFF") // Update book details
