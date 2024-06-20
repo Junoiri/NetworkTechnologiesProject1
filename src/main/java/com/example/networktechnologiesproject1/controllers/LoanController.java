@@ -1,7 +1,10 @@
 package com.example.networktechnologiesproject1.controllers;
 
+import com.example.networktechnologiesproject1.dataTransferObjects.LoanDTO;
+import com.example.networktechnologiesproject1.entities.Book;
 import com.example.networktechnologiesproject1.entities.Loan;
 import com.example.networktechnologiesproject1.exceptions.BookNotAvailableException;
+import com.example.networktechnologiesproject1.exceptions.ErrorResponse;
 import com.example.networktechnologiesproject1.exceptions.LoanDateException;
 import com.example.networktechnologiesproject1.exceptions.LoanNotFoundException;
 import com.example.networktechnologiesproject1.repositories.LoanRepository;
@@ -17,6 +20,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Parameter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Date;
+import java.util.List;
 
 /**
  * Controller for managing loans of books to users.
@@ -28,25 +36,26 @@ public class LoanController {
 
     private final LoanRepository loanRepository;
 
+
     @Autowired
     public LoanController(LoanRepository loanRepository) {
         this.loanRepository = loanRepository;
     }
 
-    @PostMapping("/add")
-    @Operation(summary = "Create a loan", description = "Registers a new loan of a book to a user. Ensures the book is available for loan and that the loan dates are valid.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Loan successfully created", content = @Content(schema = @Schema(implementation = Loan.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid loan details or book not available for loan")
-    })
-    public ResponseEntity<Loan> addLoan(@RequestBody(description = "Loan object containing book ID, user ID, loan date, and due date") Loan loan) {
-        validateLoan(loan);
-        if (!isBookAvailableForLoan(loan.getBookId())) {
-            throw new BookNotAvailableException(loan.getBookId());
-        }
-        Loan savedLoan = loanRepository.save(loan);
-        return new ResponseEntity<>(savedLoan, HttpStatus.CREATED);
+@PostMapping("/add")
+@Operation(summary = "Create a loan", description = "Registers a new loan of a book to a user. Ensures the book is available for loan and that the loan dates are valid.")
+@ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Loan successfully created", content = @Content(schema = @Schema(implementation = Loan.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid loan details or book not available for loan")
+})
+public ResponseEntity<?> addLoan(@RequestBody(description = "Loan object containing book ID, user ID, loan date, and due date") Loan loan) {
+    validateLoan(loan);
+    if (!isBookAvailableForLoan(loan.getBookId())) {
+        throw new BookNotAvailableException(loan.getBookId());
     }
+    Loan savedLoan = loanRepository.save(loan);
+    return new ResponseEntity<>(savedLoan, HttpStatus.CREATED);
+}
     @GetMapping("/getAll")
     @Operation(summary = "Get all loans", description = "Retrieves a list of all loan records, including information about the book, the user, loan date, due date, and return date.")
     @ApiResponse(responseCode = "200", description = "Successfully retrieved all loans", content = @Content(schema = @Schema(implementation = Loan.class)))
@@ -115,4 +124,29 @@ public class LoanController {
         existingLoan.setDueDate(loanDetails.getDueDate());
         existingLoan.setReturnDate(loanDetails.getReturnDate());
     }
+    @GetMapping("/user/{userId}")
+@Operation(summary = "Get all loans for a specific user", description = "Retrieves a list of all loans for a specific user by their unique identifier.")
+@ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully retrieved all loans for the user", content = @Content(schema = @Schema(implementation = Loan.class))),
+        @ApiResponse(responseCode = "404", description = "No loans found for the user with the provided ID")
+})
+public ResponseEntity<List<Loan>> getLoansByUserId(@PathVariable @Parameter(description = "Unique identifier of the user to retrieve loans for") Integer userId) {
+    List<Loan> loans = loanRepository.findByUserId(userId);
+    if (loans.isEmpty()) {
+        return ResponseEntity.notFound().build();
+    }
+    return ResponseEntity.ok(loans);
+}
+@PutMapping("/return/{id}")
+@Operation(summary = "Return a book", description = "Sets the return date of a loan to the current date, indicating that the book has been returned.")
+@ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully updated the loan's return date", content = @Content(schema = @Schema(implementation = Loan.class))),
+        @ApiResponse(responseCode = "404", description = "Loan not found with the provided ID")
+})
+public ResponseEntity<Loan> returnBook(@PathVariable @Parameter(description = "Unique identifier of the loan to update") Integer id) {
+    return loanRepository.findById(id).map(existingLoan -> {
+        existingLoan.setReturnDate(new Date());
+        return new ResponseEntity<>(loanRepository.save(existingLoan), HttpStatus.OK);
+    }).orElseThrow(() -> new LoanNotFoundException(id));
+}
 }

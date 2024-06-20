@@ -18,10 +18,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -90,7 +92,7 @@ public class LoginController {
                     .setSubject(userDetails.getUsername())
                     .claim("role", roles)
                     .setIssuedAt(new Date(now))
-                    .setExpiration(new Date(now + 5 * 60 * 1000)) // 5 minutes
+                    .setExpiration(new Date(now + 20 * 60 * 1000)) // 20 minutes
                     .signWith(SignatureAlgorithm.HS256, jwtSecret.getBytes(StandardCharsets.UTF_8))
                     .compact();
 
@@ -125,4 +127,16 @@ public class LoginController {
 
         return new ResponseEntity<>(user, HttpStatus.CREATED);
     }
+
+
+@GetMapping("/isLoggedIn")
+@Operation(summary = "Check if user is logged in", description = "Checks if the user is logged in by verifying the authentication token.")
+@ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Successfully checked the login status", content = @Content(schema = @Schema(implementation = Boolean.class))),
+})
+public ResponseEntity<Boolean> isLoggedIn() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    boolean isLoggedIn = authentication != null && authentication.isAuthenticated();
+    return ResponseEntity.ok(isLoggedIn);
+}
 }

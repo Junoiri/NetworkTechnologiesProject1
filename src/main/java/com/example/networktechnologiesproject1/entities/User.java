@@ -1,5 +1,6 @@
 package com.example.networktechnologiesproject1.entities;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -38,6 +39,7 @@ public class User {
         this.userId = userId;
     }
 
+    @JsonProperty("username") // Ensure this matches the JSON property for serialization/deserialization
     public String getUsername() {
         return username;
     }
@@ -46,6 +48,7 @@ public class User {
         this.username = username;
     }
 
+    @JsonProperty("password") // Ensure this matches the JSON property for serialization/deserialization
     public String getPassword() {
         return password;
     }
@@ -54,6 +57,7 @@ public class User {
         this.password = password;
     }
 
+    @JsonProperty("role") // Ensure this matches the JSON property for serialization/deserialization
     public String getRole() {
         return role;
     }
@@ -62,6 +66,7 @@ public class User {
         this.role = role;
     }
 
+    @JsonProperty("email") // Ensure this matches the JSON property for serialization/deserialization
     public String getEmail() {
         return email;
     }
@@ -70,6 +75,7 @@ public class User {
         this.email = email;
     }
 
+    @JsonProperty("name") // Ensure this matches the JSON property for serialization/deserialization
     public String getName() {
         return name;
     }
@@ -77,4 +83,20 @@ public class User {
     public void setName(String name) {
         this.name = name;
     }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "userId=" + userId +
+                ", username='" + username + '\'' +
+                ", password='[PROTECTED]'" +
+                ", role='" + role + '\'' +
+                ", email='" + email + '\'' +
+                ", name='" + name + '\'' +
+                '}';
+    }
+
+public Integer getId() {
+    return userId;
+}
 }

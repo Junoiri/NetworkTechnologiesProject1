@@ -6,6 +6,8 @@ import com.example.networktechnologiesproject1.exceptions.BookValidationExceptio
 import com.example.networktechnologiesproject1.exceptions.DuplicateBookException;
 import com.example.networktechnologiesproject1.repositories.BookRepository;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +31,8 @@ public class BookController {
 
     private final BookRepository bookRepository;
 
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+
     /**
      * Constructor injecting BookRepository dependency.
      * @param bookRepository The BookRepository instance.
@@ -43,24 +47,29 @@ public class BookController {
      * @param book The book object to be added.
      * @return The added book object.
      */
-    @PostMapping("/add")
-    @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Add a new book", description = "Adds a new book to the library's collection. Validates the book's data against predefined criteria to ensure it meets library standards before adding it to the database.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Book created",
-                    content = @Content(schema = @Schema(implementation = Book.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid book details supplied"),
-            @ApiResponse(responseCode = "409", description = "Duplicate book ISBN provided")
-    })
-    public Book addBook(@RequestBody @Parameter(description = "The book object containing detailed information about the book to be added. This includes the ISBN, title, author, publisher, year of publication, and the number of available copies.") Book book) {
-        bookRepository.findByIsbn(book.getIsbn()).ifPresent(b -> {
-            throw new DuplicateBookException(book.getIsbn());
-        });
+@PostMapping("/add")
+@ResponseStatus(HttpStatus.CREATED)
+@Operation(summary = "Add a new book", description = "Adds a new book to the library's collection. Validates the book's data against predefined criteria to ensure it meets library standards before adding it to the database.")
+@ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Book created",
+                content = @Content(schema = @Schema(implementation = Book.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid book details supplied"),
+        @ApiResponse(responseCode = "409", description = "Duplicate book ISBN provided")
+})
+public Book addBook(@RequestBody @Parameter(description = "The book object containing detailed information about the book to be added. This includes the ISBN, title, author, publisher, year of publication, and the number of available copies.") Book book) {
+    logger.info("Attempting to add book: {}", book.toString());
 
-        validateBook(book);
+    bookRepository.findByIsbn(book.getIsbn()).ifPresent(b -> {
+        logger.error("Duplicate ISBN: {}", book.getIsbn());
+        throw new DuplicateBookException(book.getIsbn());
+    });
 
-        return bookRepository.save(book);
-    }
+    validateBook(book);
+
+    Book savedBook = bookRepository.save(book);
+    logger.info("Book with ISBN: {} added successfully", savedBook.getIsbn());
+    return savedBook;
+}
 
     /**
      * Retrieves all books from the repository.

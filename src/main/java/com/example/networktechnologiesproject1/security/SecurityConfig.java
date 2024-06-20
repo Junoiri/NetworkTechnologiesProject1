@@ -51,22 +51,30 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authz -> authz
 //                        .anyRequest().permitAll())
-                        .requestMatchers("/register", "/login").permitAll() // Permit all for login and register
+                        .requestMatchers(HttpMethod.GET, "/isLoggedIn").permitAll()
+                        .requestMatchers("/register", "/login", "/user/testAdd").permitAll() // Permit all for login and register
                         // Swagger permissions
-                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/swagger-resources/**", "/swagger-resources", "/v3/api-docs/**", "/proxy/**").permitAll()
+                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/swagger-resources/**", "/swagger-resources", "/v3/api-docs/**", "/proxy/**", "/error").permitAll()
                         // Reader permissions (ROLE_USER and ROLE_STAFF)
-                        .requestMatchers(HttpMethod.POST, "/loan/add").hasAnyRole("USER", "STAFF") // Borrow a book
                         .requestMatchers(HttpMethod.DELETE, "/loan/delete/*").hasAnyRole("USER", "STAFF") // Return a book
-                        .requestMatchers(HttpMethod.POST, "/review/add").hasAnyRole("USER", "STAFF") // Add a review (BONUS)
                         .requestMatchers(HttpMethod.GET, "/loan/getAll", "/loan/*").hasAnyRole("USER", "STAFF") // View Loan History
+                        .requestMatchers(HttpMethod.GET, "/loan/user/*").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/user/{id}/current").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/user/current").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/user/testAdd").permitAll()
+
+
                         // Librarian permissions (ROLE_STAFF)
-                        .requestMatchers(HttpMethod.POST, "/bookDetail/add").hasRole("STAFF") // Add book details
                         .requestMatchers(HttpMethod.PUT, "/bookDetail/update/*").hasRole("STAFF") // Update book details
                         .requestMatchers(HttpMethod.DELETE, "/bookDetail/delete/*").hasRole("STAFF") // Delete book details
                         .requestMatchers(HttpMethod.GET, "/user/getAll", "/user/*").hasRole("STAFF") // Manage User Accounts
-                        .requestMatchers(HttpMethod.POST, "/user/add").hasRole("STAFF") // Add a user
                         .requestMatchers(HttpMethod.PUT, "/user/update/*").hasRole("STAFF") // Update user
                         .requestMatchers(HttpMethod.DELETE, "/user/delete/*").hasRole("STAFF") // Delete user
+                        .requestMatchers(HttpMethod.GET, "/user/{id}/current").authenticated() // Get current user's ID
+                        .requestMatchers(HttpMethod.GET, "/user/{id}/loanCount").hasRole("STAFF")
+                        .requestMatchers(HttpMethod.PUT, "/loan/return/{id}").hasRole("STAFF")
+
+
                         // .requestMatchers(HttpMethod.GET, "/reports/**").hasRole("STAFF") // Generate reports (BONUS)
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session
